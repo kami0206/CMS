@@ -152,7 +152,7 @@ const StaffPage: React.FC = () => {
     },
     {
       title: "Thao tác",
-      fixed: "right",
+      fixed: 'right' as 'left' | 'right',
       render: (_: unknown, record: Employee) => {
         const menu = (
           <Menu onClick={({ key }) => handleMenuClick(key, record)}>
