@@ -147,11 +147,12 @@ const StaffPage: React.FC = () => {
         status === "active" ? (
           <Tag color="green">Hoạt động</Tag>
         ) : (
-          <Tag color="red">Ngừng</Tag>
+          <Tag color="red">Ngừng hoạt động</Tag>
         ),
     },
     {
       title: "Thao tác",
+      fixed: "right",
       render: (_: unknown, record: Employee) => {
         const menu = (
           <Menu onClick={({ key }) => handleMenuClick(key, record)}>
@@ -169,11 +170,11 @@ const StaffPage: React.FC = () => {
           </Dropdown>
         );
       },
-    },
+    }
   ];
 
   return (
-    <Layout className="min-h-screen">
+    <Layout className="">
       <Content className="p-6 bg-gray-50 flex-grow flex flex-col">
         <div className="flex flex-wrap justify-end mb-4 w-full px-4 gap-3">
           <Button
@@ -228,10 +229,7 @@ const StaffPage: React.FC = () => {
 
         {/* Footer phân trang */}
       </Content>
-      <Footer
-        className="bg-white "
-       
-      >
+      <Footer className="bg-white ">
         <Flex
           align="center"
           wrap="wrap"
