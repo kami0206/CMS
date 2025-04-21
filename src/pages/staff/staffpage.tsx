@@ -1,53 +1,19 @@
-import React, { useState, useEffect } from "react";
-import {
-  Layout,
-  Table,
-  Button,
-  Dropdown,
-  Menu,
-  Tag,
-  Input,
-  Spin,
-  Alert,
-  Modal,
-  notification,
-  Pagination,
-  Flex,
-} from "antd";
-import {
-  EllipsisOutlined,
-  FilterOutlined,
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import React, { useState, useEffect, useMemo } from "react";
+import { Layout, Table, Button, Dropdown, Menu, Tag, Input, Spin, Alert, Modal, notification, Pagination } from "antd";
+import { EllipsisOutlined, FilterOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import useFetch from "@/services/useFetch";
+import { fetchEmployees, deleteEmployee, updateEmployee } from "@/services/staffApi";
 import EmployeeForm from "@/components/actionhandlers/create";
 import EmployeeEditForm from "@/components/actionhandlers/edit";
-import Api from "@/services/api";
-
+import { Employee } from "@/types/employeetype";
 const { Content, Footer } = Layout;
 
-interface Employee {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  role: string;
-  gender: string;
-  status: string;
-  staffId: string;
-}
-
 const StaffPage: React.FC = () => {
-  const { data, error } = useFetch<Employee[]>("/staff");
-  const [loading, setLoading] = useState<boolean>(false);
+  const { data, error, loading } = useFetch<Employee[]>("/staff");  // Using the custom hook here
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
-    null
-  );
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
 
@@ -73,7 +39,7 @@ const StaffPage: React.FC = () => {
   const handleDelete = async () => {
     if (employeeToDelete) {
       try {
-        await Api.delete(`/staff/${employeeToDelete.id}`);
+        await deleteEmployee(employeeToDelete.id);  // Using the service function
         setEmployees(employees.filter((emp) => emp.id !== employeeToDelete.id));
         setIsModalVisible(false);
         notification.success({
@@ -90,35 +56,31 @@ const StaffPage: React.FC = () => {
   };
 
   const handleEditSubmit = async (values: any) => {
-    setLoading(true);
-    try {
-      const response = await Api.put(`/staff/${employeeToEdit?.id}`, values);
-      const updatedEmployee = response.data;
-      setEmployees((prevEmployees) =>
-        prevEmployees.map((emp) =>
-          emp.id === updatedEmployee.id ? updatedEmployee : emp
-        )
-      );
-      setIsEditModalVisible(false);
-      notification.success({
-        message: "Thành công",
-        description: "Cập nhật thông tin nhân viên thành công!",
-      });
-    } catch {
-      notification.error({
-        message: "Lỗi",
-        description: "Có lỗi xảy ra khi cập nhật thông tin!",
-      });
-    } finally {
-      setLoading(false);
+    if (employeeToEdit) {
+      try {
+        const updatedEmployee = await updateEmployee(employeeToEdit.id, values);  // Using the service function
+        setEmployees((prevEmployees) =>
+          prevEmployees.map((emp) => (emp.id === updatedEmployee.id ? updatedEmployee : emp))
+        );
+        setIsEditModalVisible(false);
+        notification.success({
+          message: "Thành công",
+          description: "Cập nhật thông tin nhân viên thành công!",
+        });
+      } catch {
+        notification.error({
+          message: "Lỗi",
+          description: "Có lỗi xảy ra khi cập nhật thông tin!",
+        });
+      }
     }
   };
 
   const handleCreateSuccess = async () => {
     setIsCreateModalVisible(false);
     try {
-      const response = await Api.get("/staff");
-      setEmployees(response.data);
+      const newEmployees = await fetchEmployees();  // Fetch updated employee list
+      setEmployees(newEmployees);
     } catch {
       notification.error({
         message: "Lỗi",
@@ -127,7 +89,7 @@ const StaffPage: React.FC = () => {
     }
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: "#",
       dataIndex: "index",
@@ -170,9 +132,8 @@ const StaffPage: React.FC = () => {
           </Dropdown>
         );
       },
-    }
-  ];
-
+    },
+  ], [currentPage, pageSize]);
   return (
     <Layout className="">
       <Content className="p-6 bg-gray-50 flex-grow flex flex-col">
@@ -230,11 +191,7 @@ const StaffPage: React.FC = () => {
         {/* Footer phân trang */}
       </Content>
       <Footer className="bg-white ">
-        <Flex
-          align="center"
-          wrap="wrap"
-          className="w-full justify-center gap-x-4 gap-y-2 sm:justify-between"
-        >
+        <div className="w-full flex justify-between items-center">
           <div className="font-semibold text-gray-500">
             Hiển thị từ
             <span className="mx-1 text-black">
@@ -259,8 +216,9 @@ const StaffPage: React.FC = () => {
               setPageSize(pageSize);
             }}
           />
-        </Flex>
+        </div>
       </Footer>
+
       {/* Modal xác nhận xóa */}
       <Modal
         title="Xác nhận xóa"
