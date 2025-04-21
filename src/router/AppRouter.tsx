@@ -17,7 +17,6 @@ import LoginPage from "@/pages/Login/loginpage";
 import useAuthStore from "@/store/userstore";
 
 const AppRouter: React.FC = () => {
-  // ✅ Đoạn này sửa lại để tránh lỗi
   const accessToken = useAuthStore((state) => state.accessToken);
 
   return (
