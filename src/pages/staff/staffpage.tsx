@@ -29,13 +29,14 @@ import Api from "@/services/api";
 const { Content, Footer } = Layout;
 
 interface Employee {
-  staffId: string;
+  id: string;
   name: string;
   phone: string;
   email: string;
   role: string;
   gender: string;
   status: string;
+  staffId: string;
 }
 
 const StaffPage: React.FC = () => {
@@ -72,8 +73,8 @@ const StaffPage: React.FC = () => {
   const handleDelete = async () => {
     if (employeeToDelete) {
       try {
-        await Api.delete(`/staff/${employeeToDelete.staffId}`);
-        setEmployees(employees.filter((emp) => emp.staffId !== employeeToDelete.staffId));
+        await Api.delete(`/staff/${employeeToDelete.id}`);
+        setEmployees(employees.filter((emp) => emp.id !== employeeToDelete.id));
         setIsModalVisible(false);
         notification.success({
           message: "Thành công",
@@ -91,11 +92,11 @@ const StaffPage: React.FC = () => {
   const handleEditSubmit = async (values: any) => {
     setLoading(true);
     try {
-      const response = await Api.put(`/staff/${employeeToEdit?.staffId}`, values);
+      const response = await Api.put(`/staff/${employeeToEdit?.id}`, values);
       const updatedEmployee = response.data;
       setEmployees((prevEmployees) =>
         prevEmployees.map((emp) =>
-          emp.staffId === updatedEmployee.id ? updatedEmployee : emp
+          emp.id === updatedEmployee.id ? updatedEmployee : emp
         )
       );
       setIsEditModalVisible(false);
