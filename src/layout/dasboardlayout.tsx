@@ -5,7 +5,7 @@ import { Outlet } from "react-router-dom";
 const DashboardLayout: React.FC = () => {
   const title = "Nhân viên";
   return (
-    <Layout className="h-screen">
+    <Layout className="h-full">
       <Sidebar />
       <Layout>
         <Topbar title={title} />

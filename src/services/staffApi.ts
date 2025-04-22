@@ -1,22 +1,17 @@
-import Api from "@/services/api";
+// src/services/staffApi.ts
 import { Employee } from "@/types/employeetype";
+import axiosInstance from "./api";
 
-// Lấy danh sách nhân viên
 export const fetchEmployees = async (): Promise<Employee[]> => {
-  const response = await Api.get("/staff");
+  const response = await axiosInstance.get("/staff");
   return response.data;
 };
 
-// Xóa nhân viên
 export const deleteEmployee = async (id: string): Promise<void> => {
-  await Api.delete(`/staff/${id}`);
+  await axiosInstance.delete(`/staff/${id}`);
 };
 
-// Cập nhật thông tin nhân viên
-export const updateEmployee = async (
-  id: string,
-  values: Partial<Employee>
-): Promise<Employee> => {
-  const response = await Api.put(`/staff/${id}`, values);
+export const updateEmployee = async (id: string, values: any): Promise<Employee> => {
+  const response = await axiosInstance.put(`/staff/${id}`, values);
   return response.data;
 };

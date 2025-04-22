@@ -1,21 +1,47 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Layout, Table, Button, Dropdown, Menu, Tag, Input, Spin, Alert, Modal, notification, Pagination } from "antd";
-import { EllipsisOutlined, FilterOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  Layout,
+  Table,
+  Button,
+  Dropdown,
+  Menu,
+  Tag,
+  Input,
+  Spin,
+  Alert,
+  Modal,
+  notification,
+  Pagination,
+} from "antd";
+import {
+  EllipsisOutlined,
+  FilterOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import useFetch from "@/services/useFetch";
-import { fetchEmployees, deleteEmployee, updateEmployee } from "@/services/staffApi";
+import {
+  fetchEmployees,
+  deleteEmployee,
+  updateEmployee,
+} from "@/services/staffApi";
 import EmployeeForm from "@/components/actionhandlers/create";
 import EmployeeEditForm from "@/components/actionhandlers/edit";
 import { Employee } from "@/types/employeetype";
 const { Content, Footer } = Layout;
 
 const StaffPage: React.FC = () => {
-  const { data, error, loading } = useFetch<Employee[]>("/staff");  // Using the custom hook here
+  const { data, error, loading } = useFetch<Employee[]>("/staff"); // Using the custom hook here
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null
+  );
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(5);
@@ -31,36 +57,66 @@ const StaffPage: React.FC = () => {
       setIsEditModalVisible(true);
       setEmployeeToEdit(record);
     } else if (key === "delete") {
-      setEmployeeToDelete(record);
-      setIsModalVisible(true);
+      if (selectedRowKeys.length > 1) {
+        // Nếu đang chọn nhiều checkbox → xóa tất cả
+        setEmployeeToDelete(null); // Reset nhân viên riêng lẻ
+        setIsModalVisible(true);
+      } else {
+        // Nếu không chọn nhiều → chỉ xóa nhân viên được bấm
+        setEmployeeToDelete(record);
+        setIsModalVisible(true);
+      }
     }
   };
-
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedKeys: React.Key[]) => {
+      setSelectedRowKeys(newSelectedKeys);
+    },
+  };
   const handleDelete = async () => {
-    if (employeeToDelete) {
-      try {
-        await deleteEmployee(employeeToDelete.id);  // Using the service function
+    try {
+      if (selectedRowKeys.length > 1) {
+        // Xóa nhiều
+        const promises = selectedRowKeys.map((id) =>
+          deleteEmployee(id as string)
+        );
+        await Promise.all(promises);
+        setEmployees((prev) =>
+          prev.filter((emp) => !selectedRowKeys.includes(emp.id))
+        );
+        setSelectedRowKeys([]);
+        notification.success({
+          message: "Thành công",
+          description: `Đã xóa ${selectedRowKeys.length} nhân viên.`,
+        });
+      } else if (employeeToDelete) {
+        // Xóa 1
+        await deleteEmployee(employeeToDelete.id);
         setEmployees(employees.filter((emp) => emp.id !== employeeToDelete.id));
-        setIsModalVisible(false);
         notification.success({
           message: "Thành công",
           description: `Nhân viên ${employeeToDelete.name} đã được xóa!`,
         });
-      } catch {
-        notification.error({
-          message: "Lỗi",
-          description: "Có lỗi xảy ra khi xóa nhân viên. Vui lòng thử lại!",
-        });
       }
+    } catch {
+      notification.error({
+        message: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa. Vui lòng thử lại!",
+      });
+    } finally {
+      setIsModalVisible(false);
     }
   };
 
   const handleEditSubmit = async (values: any) => {
     if (employeeToEdit) {
       try {
-        const updatedEmployee = await updateEmployee(employeeToEdit.id, values);  // Using the service function
+        const updatedEmployee = await updateEmployee(employeeToEdit.id, values); // Using the service function
         setEmployees((prevEmployees) =>
-          prevEmployees.map((emp) => (emp.id === updatedEmployee.id ? updatedEmployee : emp))
+          prevEmployees.map((emp) =>
+            emp.id === updatedEmployee.id ? updatedEmployee : emp
+          )
         );
         setIsEditModalVisible(false);
         notification.success({
@@ -79,7 +135,7 @@ const StaffPage: React.FC = () => {
   const handleCreateSuccess = async () => {
     setIsCreateModalVisible(false);
     try {
-      const newEmployees = await fetchEmployees();  // Fetch updated employee list
+      const newEmployees = await fetchEmployees(); // Fetch updated employee list
       setEmployees(newEmployees);
     } catch {
       notification.error({
@@ -89,51 +145,54 @@ const StaffPage: React.FC = () => {
     }
   };
 
-  const columns = useMemo(() => [
-    {
-      title: "#",
-      dataIndex: "index",
-      render: (_: unknown, __: unknown, index: number) =>
-        (currentPage - 1) * pageSize + index + 1,
-    },
-    { title: "Mã nhân viên", dataIndex: "staffId" },
-    { title: "Tên nhân viên", dataIndex: "name" },
-    { title: "Số điện thoại", dataIndex: "phone" },
-    { title: "Email", dataIndex: "email" },
-    { title: "Chức vụ", dataIndex: "role" },
-    { title: "Giới tính", dataIndex: "gender" },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      render: (status: string) =>
-        status === "active" ? (
-          <Tag color="green">Hoạt động</Tag>
-        ) : (
-          <Tag color="red">Ngừng hoạt động</Tag>
-        ),
-    },
-    {
-      title: "Thao tác",
-      fixed: 'right' as 'left' | 'right',
-      render: (_: unknown, record: Employee) => {
-        const menu = (
-          <Menu onClick={({ key }) => handleMenuClick(key, record)}>
-            <Menu.Item key="edit" icon={<EditOutlined />}>
-              Chỉnh sửa
-            </Menu.Item>
-            <Menu.Item key="delete" icon={<DeleteOutlined />} danger>
-              Xóa
-            </Menu.Item>
-          </Menu>
-        );
-        return (
-          <Dropdown overlay={menu} trigger={["click"]}>
-            <Button icon={<EllipsisOutlined />} />
-          </Dropdown>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        title: "#",
+        dataIndex: "index",
+        render: (_: unknown, __: unknown, index: number) =>
+          (currentPage - 1) * pageSize + index + 1,
       },
-    },
-  ], [currentPage, pageSize]);
+      { title: "Mã nhân viên", dataIndex: "staffId" },
+      { title: "Tên nhân viên", dataIndex: "name" },
+      { title: "Số điện thoại", dataIndex: "phone" },
+      { title: "Email", dataIndex: "email" },
+      { title: "Chức vụ", dataIndex: "role" },
+      { title: "Giới tính", dataIndex: "gender" },
+      {
+        title: "Trạng thái",
+        dataIndex: "status",
+        render: (status: string) =>
+          status === "active" ? (
+            <Tag color="green">Hoạt động</Tag>
+          ) : (
+            <Tag color="red">Ngừng hoạt động</Tag>
+          ),
+      },
+      {
+        title: "Thao tác",
+        fixed: "right" as "left" | "right",
+        render: (_: unknown, record: Employee) => {
+          const menu = (
+            <Menu onClick={({ key }) => handleMenuClick(key, record)}>
+              <Menu.Item key="edit" icon={<EditOutlined />}>
+                Chỉnh sửa
+              </Menu.Item>
+              <Menu.Item key="delete" icon={<DeleteOutlined />} danger>
+                Xóa
+              </Menu.Item>
+            </Menu>
+          );
+          return (
+            <Dropdown overlay={menu} trigger={["click"]}>
+              <Button icon={<EllipsisOutlined />} />
+            </Dropdown>
+          );
+        },
+      },
+    ],
+    [currentPage, pageSize]
+  );
   return (
     <Layout className="">
       <Content className="p-6 bg-gray-50 flex-grow flex flex-col">
@@ -176,7 +235,8 @@ const StaffPage: React.FC = () => {
         ) : (
           <div className="p-4 bg-white rounded-md shadow-sm overflow-x-auto flex-grow">
             <Table
-              rowSelection={{}}
+              rowKey="id"
+              rowSelection={rowSelection}
               dataSource={employees.slice(
                 (currentPage - 1) * pageSize,
                 currentPage * pageSize
@@ -228,10 +288,17 @@ const StaffPage: React.FC = () => {
         okText="Xóa"
         cancelText="Hủy"
       >
-        <p>
-          Bạn có chắc chắn muốn xóa nhân viên{" "}
-          <strong>{employeeToDelete?.name}</strong>?
-        </p>
+        {selectedRowKeys.length > 1 ? (
+          <p>
+            Bạn có chắc chắn muốn xóa <strong>{selectedRowKeys.length}</strong>{" "}
+            nhân viên đã chọn?
+          </p>
+        ) : (
+          <p>
+            Bạn có chắc chắn muốn xóa nhân viên{" "}
+            <strong>{employeeToDelete?.name}</strong>?
+          </p>
+        )}
       </Modal>
 
       {/* Modal tạo nhân viên */}

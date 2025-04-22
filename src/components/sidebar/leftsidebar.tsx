@@ -107,7 +107,7 @@ const Sidebar: React.FC = () => {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      className=" h-screen bg-white shadow-lg"
+      className=" h-auto bg-white "
     >
       {/* Logo */}
       <div className="relative flex h-15 w-full items-center justify-center bg-white transition-all duration-500">

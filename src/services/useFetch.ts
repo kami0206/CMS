@@ -1,28 +1,28 @@
-import { useEffect, useState } from 'react'
-import Api from './api'
+// src/services/useFetch.ts
+import { useEffect, useState } from "react";
+import axiosInstance from "./api";
 
-const useFetch = <T = any>(endpoint: string) => {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+const useFetch = <T>(endpoint: string) => {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
-        const response = await Api.get(endpoint)
-        setData(response.data)
+        const response = await axiosInstance.get(endpoint);
+        setData(response.data);
       } catch (err: any) {
-        setError(err.message || 'Something went wrong')
+        setError(err.message || "Có lỗi xảy ra");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [endpoint])
+    fetchData();
+  }, [endpoint]);
 
-  return { data, loading, error }
-}
+  return { data, error, loading };
+};
 
-export default useFetch
+export default useFetch;
