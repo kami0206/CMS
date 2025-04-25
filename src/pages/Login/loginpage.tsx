@@ -1,92 +1,82 @@
-import React, { useState } from 'react';
-import { Button, Checkbox, Form, Input, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import useAuthStore from '@/store/userstore';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "@/store/userstore"; // Assuming the store is in this path
+import { LoginProps } from "@/types/usertype"; // Adjust the path accordingly
 
 const LoginPage: React.FC = () => {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { fetchUserData } = useAuthStore();
+  const loginUser = useAuthStore((state) => state.loginUser);
+  const error = useAuthStore((state) => state.error);
+  const loading = useAuthStore((state) => state.loading);
 
-  interface LoginFormValues {
-    email: string;
-    password: string;
-    remember?: boolean;
-  }
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
-  const onFinish = async (values: LoginFormValues) => {
-    setLoading(true);
-    const success = await fetchUserData(values.email, values.password);
-    setLoading(false);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const credentials: LoginProps = { email, password };
 
-    if (success) {
-      message.success("Đăng nhập thành công!");
-      navigate("/");
-    } else {
-      message.error("Sai email hoặc mật khẩu!");
+    try {
+      await loginUser(credentials); // Call the login function from Zustand store
+
+      // If login is successful, navigate to the dashboard
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error("Login failed", err);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-pink-100">
-      <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Chào mừng trở lại </h2>
-        <Form
-          name="login"
-          initialValues={{
-            remember: true,
-            email: 'vuvansu390@gmail.com',
-            password: 'su123456'
-          }}
-          onFinish={onFinish}
-          layout="vertical"
-        >
-          <Form.Item
-            name="email"
-            label={<span className="font-medium">Email</span>}
-            rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
-          >
-            <Input
-              prefix={<UserOutlined className="text-gray-400" />}
-              placeholder="Nhập email"
-              className="py-2"
-            />
-          </Form.Item>
+    <div className="min-h-screen flex justify-center items-center bg-orange-100">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg border border-gray-300">
+        <h2 className="text-3xl font-semibold mb-6 text-center text-orange-600">Welcome Back</h2>
 
-          <Form.Item
-            name="password"
-            label={<span className="font-medium">Mật khẩu</span>}
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined className="text-gray-400" />}
-              placeholder="Nhập mật khẩu"
-              className="py-2"
-            />
-          </Form.Item>
+        {/* Display error if login fails */}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-          <div className="flex items-center justify-between mb-4">
-            <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox className="text-sm">Ghi nhớ tài khoản</Checkbox>
-            </Form.Item>
-            <a href="#" className="text-sm text-blue-500 hover:underline">Quên mật khẩu?</a>
+        <form onSubmit={handleLogin}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full px-4 py-3 border border-orange-500 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm"
+            />
           </div>
 
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              loading={loading}
-              size="large"
-            >
-              Đăng nhập
-            </Button>
-          </Form.Item>
-        </Form>
-        <div className="text-center text-sm text-gray-500">
-          Bạn chưa có tài khoản? <a href="#" className="text-blue-500 hover:underline">Đăng ký</a>
+          <div className="mb-6">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-4 py-3 border border-orange-500 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent sm:text-sm"
+            />
+          </div>
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 px-4 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
+          >
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-500">Don't have an account? <a href="/signup" className="text-orange-600 hover:underline">Sign Up</a></p>
         </div>
       </div>
     </div>

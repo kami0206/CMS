@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Badge, Avatar, Dropdown, Menu } from "antd";
+import { Layout, Badge, Avatar, Dropdown, MenuProps } from "antd";
 import {
   BellOutlined,
   DownOutlined,
@@ -16,18 +16,18 @@ type TopBarProps = {
 };
 
 const Topbar: React.FC<TopBarProps> = ({ title }) => {
-  const { language, setLanguage } = LanguageStore(); // Get language state from LanguageStore
-  const { userName, imgUrl, accessToken, logout } = useAuthStore(); // Destructure userName, imgUrl, and accessToken from useAuthStore
+  const language = LanguageStore((state) => state.language);
+  const setLanguage = LanguageStore((state) => state.setLanguage);
 
-  // Handle language change
-  const handleLanguageChange = (key: string) => {
-    setLanguage(key === "1" ? "vi" : "en"); // Update language
-  };
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const logoutUser = useAuthStore((state) => state.logoutUser);
 
-  // Language menu
-  const languageMenu = (
-    <Menu onClick={(e) => handleLanguageChange(e.key)}>
-      <Menu.Item key="1">
+  // Language options
+  const languageItems: MenuProps["items"] = [
+    {
+      key: "vi",
+      label: (
         <div className="flex items-center gap-2">
           <img
             src="https://flagcdn.com/w40/vn.png"
@@ -36,8 +36,11 @@ const Topbar: React.FC<TopBarProps> = ({ title }) => {
           />
           Tiếng Việt
         </div>
-      </Menu.Item>
-      <Menu.Item key="2">
+      ),
+    },
+    {
+      key: "en",
+      label: (
         <div className="flex items-center gap-2">
           <img
             src="https://flagcdn.com/w40/us.png"
@@ -46,25 +49,28 @@ const Topbar: React.FC<TopBarProps> = ({ title }) => {
           />
           English
         </div>
-      </Menu.Item>
-    </Menu>
-  );
+      ),
+    },
+  ];
 
-  // User menu
-  const userMenu = (
-    <Menu>
-      <Menu.Item key="1" icon={<SettingOutlined />}>
-        Cài đặt
-      </Menu.Item>
-      <Menu.Item
-        key="2"
-        icon={<LogoutOutlined />}
-        onClick={logout} // Call logout function
-      >
-        Đăng xuất
-      </Menu.Item>
-    </Menu>
-  );
+  const handleLanguageChange: MenuProps["onClick"] = (info) => {
+    setLanguage(info.key as "vi" | "en");
+  };
+
+  // User menu items
+  const userItems: MenuProps["items"] = [
+    {
+      key: "settings",
+      icon: <SettingOutlined />,
+      label: "Cài đặt",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Đăng xuất",
+      onClick: logoutUser,
+    },
+  ];
 
   return (
     <Header className="flex items-center justify-between bg-white shadow-md px-4">
@@ -73,11 +79,10 @@ const Topbar: React.FC<TopBarProps> = ({ title }) => {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
-        {/* Language Selector */}
+        {/* Language Dropdown */}
         <Dropdown
-          overlay={languageMenu}
+          menu={{ items: languageItems, onClick: handleLanguageChange }}
           trigger={["click"]}
-          overlayClassName="rounded-md shadow-md border border-gray-200 bg-white"
         >
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-300 bg-white cursor-pointer hover:border-gray-400 transition">
             <img
@@ -96,22 +101,20 @@ const Topbar: React.FC<TopBarProps> = ({ title }) => {
           </div>
         </Dropdown>
 
-        {/* Notification */}
+        {/* Notification Bell */}
         <Badge count={99} overflowCount={99} offset={[0, 5]}>
           <BellOutlined className="text-xl text-gray-700 cursor-pointer" />
         </Badge>
 
         {/* User Avatar Dropdown */}
-        <Dropdown overlay={userMenu} trigger={["click"]}>
+        <Dropdown menu={{ items: userItems }} trigger={["click"]}>
           <div className="flex items-center gap-2 cursor-pointer">
             <Avatar
-              src={imgUrl || "https://i.pravatar.cc/300"} // Use imgUrl from store or fallback to default
+              src={user?.avatar || "https://i.pravatar.cc/300"}
               alt="User Avatar"
-              className="cursor-pointer"
             />
             <span className="text-gray-700 font-medium">
-              {accessToken ? userName || "Người dùng" : "Khách"}{" "}
-              {/* Display user's name if available */}
+              {token ? user?.name || "Người dùng" : "Khách"}
             </span>
           </div>
         </Dropdown>

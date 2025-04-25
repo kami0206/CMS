@@ -1,73 +1,98 @@
-import Api from '@/services/api';
+// types/authStore.ts
 import { create } from 'zustand';
-import { combine } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
+import User, { LoginProps } from '@/types/usertype'; // Adjust paths as needed
+import axiosInstance from '@/services/api';
 
-const useAuthStore = create(
-  combine(
-    {
-      accessToken: localStorage.getItem('accessToken') || "",
-      imgUrl: localStorage.getItem('imgUrl') || "", 
-      userName: localStorage.getItem('userName') || ""
-    },
+// Define the AuthState interface
+export interface AuthState {
+  token?: string;
+  user?: User;
+  error?: string;
+  loading?: boolean;
+  isAuth?: boolean;
+
+  loginUser: (props: LoginProps) => Promise<void>;
+  logoutUser: () => Promise<void>;
+}
+
+// Custom storage implementation to handle JSON parsing/stringifying
+const customStorage = {
+  getItem: (name: string) => {
+    const value = localStorage.getItem(name);
+    try {
+      return value ? JSON.parse(value) : null;
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: any) => {
+    try {
+      const valueToStore = JSON.stringify(value);
+      localStorage.setItem(name, valueToStore);
+    } catch (e) {
+      console.error("Error storing data", e);
+    }
+  },
+  removeItem: (name: string) => {
+    localStorage.removeItem(name);
+  },
+};
+
+const useAuthStore = create<AuthState>()(
+  persist(
     (set) => ({
-      setAccessToken: (newAccessToken: string) => {
-        localStorage.setItem('accessToken', newAccessToken); // Lưu accessToken vào localStorage
-        set({ accessToken: newAccessToken });
-      },
-      setImgUrl: (newImgUrl: string) => {
-        localStorage.setItem('imgUrl', newImgUrl); // Lưu imgUrl vào localStorage
-        set({ imgUrl: newImgUrl });
-      },
-      setUserName: (newUserName: string) => {
-        localStorage.setItem('userName', newUserName); // Lưu userName vào localStorage
-        set({ userName: newUserName });
-      },
-      logout: () => {
-        localStorage.removeItem('accessToken'); // Xóa accessToken khỏi localStorage
-        localStorage.removeItem('imgUrl'); // Xóa imgUrl khỏi localStorage
-        localStorage.removeItem('userName'); // Xóa userName khỏi localStorage
-        set({
-          accessToken: "",
-          imgUrl: "",
-          userName: ""
-        });
-      },
-      // Đăng nhập: kiểm tra email và password trong mock API
-      fetchUserData: async (email: string, password: string) => {
-        try {
-          const response = await Api.get('/users');
-          interface User {
-            email: string;
-            password: string;
-            access_token: string;
-            avatar: string;
-            name: string;
-          }
+      token: undefined,
+      user: undefined,
+      error: undefined,
+      loading: false,
+      isAuth: false,
 
-          const user = response.data.find(
-            (u: User) => u.email === email && u.password === password
-          );
+      loginUser: async (props: LoginProps) => {
+        set({ loading: true, error: undefined });
+
+        try {
+          // Simulate an API call to log the user in
+          const res = await axiosInstance.get<User[]>(`/users?email=${props.email}`);
+          const user = res.data.find(u => u.email === props.email && u.password === props.password);
 
           if (user) {
+            // Simulate the token, replace with actual logic if necessary
+            const token = 'mockToken';
+
             set({
-              accessToken: user.access_token,
-              imgUrl: user.avatar,
-              userName: user.name
+              user,
+              token,
+              isAuth: true,
+              loading: false,
+              error: undefined,
             });
-            // Lưu thông tin người dùng vào localStorage khi đăng nhập thành công
-            localStorage.setItem('accessToken', user.access_token);
-            localStorage.setItem('imgUrl', user.avatar);
-            localStorage.setItem('userName', user.name);
-            return true;
           } else {
-            return false;
+            set({
+              loading: false,
+              error: 'Invalid email or password',
+            });
           }
-        } catch (error) {
-          console.error("Lỗi khi fetch user:", error);
-          return false;
+        } catch (err: any) {
+          set({
+            loading: false,
+            error: err.message || 'Login failed',
+          });
         }
-      }
-    })
+      },
+
+      logoutUser: async () => {
+        set({
+          user: undefined,
+          token: undefined,
+          isAuth: false,
+        });
+      },
+    }),
+    {
+      name: 'auth-storage', // Store name for persistence
+      storage: customStorage, // Use custom storage with JSON serialization/deserialization
+    }
   )
 );
 

@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import DashboardLayout from "@/layout/dasboardlayout";
 import OverviewPage from "@/pages/overview/overviewpage";
 import StaffPage from "@/pages/staff/staffpage";
@@ -15,9 +20,10 @@ import Category1Page from "@/pages/category/categorypage1";
 import Category2Page from "@/pages/category/categorypage2";
 import LoginPage from "@/pages/Login/loginpage";
 import useAuthStore from "@/store/userstore";
+import FormPage from "@/pages/create/FromPage";
 
 const AppRouter: React.FC = () => {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const accessToken = useAuthStore((state) => state.token);
 
   return (
     <Router>
@@ -29,15 +35,13 @@ const AppRouter: React.FC = () => {
         <Route
           path="/"
           element={
-            accessToken ? (
-              <DashboardLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            accessToken ? <DashboardLayout /> : <Navigate to="/login" replace />
           }
         >
           <Route index element={<OverviewPage />} />
           <Route path="staff" element={<StaffPage />} />
+          <Route path="/create" element={<FormPage />} />
+          <Route path="/edit/:id" element={<FormPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="order" element={<OrdersPage />} />
           <Route path="warehouse" element={<WarehousePage />} />
