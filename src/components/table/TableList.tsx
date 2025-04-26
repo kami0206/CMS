@@ -20,7 +20,10 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useListing } from "@/hooks/useListing";
-import { deleteEmployee, deleteMultipleEmployees } from "@/services/satffservices";
+import {
+  deleteEmployee,
+  deleteMultipleEmployees,
+} from "@/services/satffservices";
 
 type TableListProps = {
   columns: any[];
@@ -165,52 +168,52 @@ const TableList: React.FC<TableListProps> = ({
       content: "Hành động này không thể hoàn tác.",
       okText: "Xóa",
       cancelText: "Hủy",
-      onOk: () => {
-        // Gọi API để xóa mục này
-        deleteEmployee(record.id)
-          .then((response) => {
-            console.log("Xóa thành công:", response);
-            // Cập nhật lại bảng sau khi xóa
-            handleGetList();
-          })
-          .catch((error) => {
-            console.error("Lỗi khi xóa:", error);
-          });
+      okButtonProps: {
+        danger: true,
+      },
+      onOk: async () => {
+        try {
+          await deleteEmployee(record.id);
+          console.log("Xóa thành công");
+          await handleGetList(); // Fetch lại danh sách
+        } catch (error) {
+          console.error("Lỗi khi xóa:", error);
+          throw error; // Ném lỗi để Modal không tự đóng nếu có lỗi
+        }
       },
     });
   };
-  
+
   const handleDeleteSelected = () => {
     if (selectedRowKeys.length === 0) {
       alert("Vui lòng chọn ít nhất một mục để xóa.");
       return;
     }
-  
-    console.log("Danh sách các mục được chọn:", selectedRowKeys);
-  
+
     Modal.confirm({
       title: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} mục?`,
       icon: <DeleteOutlined />,
       content: "Hành động này không thể hoàn tác.",
       okText: "Xóa",
       cancelText: "Hủy",
-      onOk: () => {
-        const payload = selectedRowKeys.map((key) => ({ id: String(key) }));
-        console.log("Payload gửi đến API:", payload);
-        deleteMultipleEmployees(payload)
-          .then((response) => {
-            console.log("Xóa thành công các mục đã chọn:", response);
-            handleGetList(); // Tải lại danh sách
-            setSelectedRowKeys([]); // Bỏ chọn các mục đã xóa
-          })
-          .catch((error) => {
-            console.error("Lỗi khi xóa các mục:", error);
-          });
+      okButtonProps: {
+        danger: true,
+      },
+      onOk: async () => {
+        try {
+          const payload = selectedRowKeys.map((key) => ({ id: String(key) }));
+          await deleteMultipleEmployees(payload);
+          console.log("Xóa thành công các mục đã chọn");
+          await handleGetList();
+          setSelectedRowKeys([]);
+        } catch (error) {
+          console.error("Lỗi khi xóa:", error);
+          throw error; // Nếu lỗi thì Modal sẽ không tự đóng
+        }
       },
     });
   };
-  
-  
+
   useEffect(() => {
     handleGetList();
   }, [searchParams]);
