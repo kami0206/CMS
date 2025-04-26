@@ -22,11 +22,12 @@ const { Sider } = Layout;
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { userName } = useAuthStore();
-  const initials = userName
-  ?.split(" ")
-  .map(word => word.charAt(0).toUpperCase())
-  .join("") || "U";
+  const { user } = useAuthStore();
+
+  const initials = user?.name
+    ?.split(" ")
+    .map(word => word.charAt(0).toUpperCase())
+    .join("") || "U";
   // Tạo menu items có hỗ trợ NavLink
   const menuItems = [
     {
@@ -113,7 +114,7 @@ const Sidebar: React.FC = () => {
       <div className="relative flex h-15 w-full items-center justify-center bg-white transition-all duration-500">
         <h4 className="text-primary text-xl font-semibold flex items-center gap-2">
           {!collapsed && <AppstoreOutlined className="text-primary" />}
-          {collapsed ? initials : userName || "User"}
+          {collapsed ? initials : user?.name || "User"}
         </h4>
         <div className="absolute right-0 translate-x-1/2">
           <Button size="small" onClick={() => setCollapsed(!collapsed)}>
