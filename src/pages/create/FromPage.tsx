@@ -167,7 +167,6 @@ const FormPage: React.FC = () => {
           >
             <Select placeholder="Chọn trạng thái" className="rounded-lg py-3 px-4 text-base">
               <Option value="active">Hoạt động</Option>
-              <Option value="pending">Đang chờ</Option>
               <Option value="deactive">Ngừng hoạt động</Option>
             </Select>
           </Form.Item>
